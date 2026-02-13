@@ -76,11 +76,11 @@ export function useHandGesture(videoElement) {
               
               // Smooth gesture detection with history
               gestureHistoryRef.current.push(detectedGesture)
-              if (gestureHistoryRef.current.length > 5) {
+              if (gestureHistoryRef.current.length > 3) {
                 gestureHistoryRef.current.shift()
               }
 
-              // Get most common gesture
+              // Get most common gesture (require 2 out of 3)
               const gestureCounts = {}
               gestureHistoryRef.current.forEach(g => {
                 gestureCounts[g] = (gestureCounts[g] || 0) + 1
@@ -90,15 +90,22 @@ export function useHandGesture(videoElement) {
                 b[1] > a[1] ? b : a
               )
 
-              if (mostCommon[1] >= 3 && mostCommon[0] !== lastGestureRef.current) {
+              // Update if we have at least 2 consistent readings
+              if (mostCommon[1] >= 2 && mostCommon[0] !== lastGestureRef.current) {
                 lastGestureRef.current = mostCommon[0]
                 setGesture(mostCommon[0])
+                console.log('Gesture detected:', mostCommon[0])
               }
             } else {
               // No hand detected
               gestureHistoryRef.current.push('none')
-              if (gestureHistoryRef.current.length > 5) {
+              if (gestureHistoryRef.current.length > 3) {
                 gestureHistoryRef.current.shift()
+              }
+              
+              if (lastGestureRef.current !== 'none') {
+                lastGestureRef.current = 'none'
+                setGesture('none')
               }
             }
           } catch (error) {
@@ -126,33 +133,40 @@ export function useHandGesture(videoElement) {
 function classifyGesture(landmarks) {
   const fingers = getFingersUp(landmarks)
   const [thumb, index, middle, ring, pinky] = fingers
+  
+  // Count extended fingers
+  const fingerCount = fingers.filter(f => f).length
 
-  // Peace Sign: Index and Middle up, others down
-  if (!thumb && index && middle && !ring && !pinky) {
-    return 'peace'
+  // Debug log (remove in production)
+  console.log('Fingers:', { thumb, index, middle, ring, pinky, count: fingerCount })
+
+  // Fist: All fingers down (check first for priority)
+  if (fingerCount === 0) {
+    return 'fist'
   }
 
-  // Love Sign: Thumb, Index, and Pinky up
-  if (thumb && index && !middle && !ring && pinky) {
-    return 'love'
-  }
-
-  // L Sign: Thumb and Index up, others down (check angle)
-  if (thumb && index && !middle && !ring && !pinky) {
-    const angle = calculateAngle(landmarks[4], landmarks[0], landmarks[8])
-    if (angle > 70 && angle < 110) {
-      return 'l_sign'
-    }
-  }
-
-  // Open Palm: All fingers up
-  if (fingers.filter(f => f).length >= 4) {
+  // Open Palm: 4 or 5 fingers up
+  if (fingerCount >= 4) {
     return 'open_palm'
   }
 
-  // Fist: All fingers down
-  if (fingers.filter(f => f).length <= 1) {
-    return 'fist'
+  // Peace Sign: ONLY Index and Middle up (2 fingers)
+  if (fingerCount === 2 && !thumb && index && middle && !ring && !pinky) {
+    return 'peace'
+  }
+
+  // Love Sign: Thumb, Index, and Pinky up (3 fingers)
+  if (fingerCount === 3 && thumb && index && !middle && !ring && pinky) {
+    return 'love'
+  }
+
+  // L Sign: Thumb and Index up, check angle (2 fingers)
+  if (fingerCount === 2 && thumb && index && !middle && !ring && !pinky) {
+    const angle = calculateAngle(landmarks[4], landmarks[0], landmarks[8])
+    console.log('L Sign angle:', angle)
+    if (angle > 60 && angle < 120) {
+      return 'l_sign'
+    }
   }
 
   return 'none'
@@ -162,15 +176,22 @@ function classifyGesture(landmarks) {
 function getFingersUp(landmarks) {
   const fingers = []
 
-  // Thumb (compare x-coordinate)
-  fingers.push(landmarks[4].x < landmarks[3].x ? 1 : 0)
+  // Thumb: Check if tip is to the right of MCP joint (for right hand)
+  // More reliable: compare thumb tip with thumb IP joint
+  const thumbIsUp = landmarks[4].x < landmarks[3].x - 0.05
+  fingers.push(thumbIsUp ? 1 : 0)
 
-  // Other fingers (compare y-coordinate)
+  // Other fingers: Compare tip with PIP joint (more reliable than MCP)
   const fingerTips = [8, 12, 16, 20]
   const fingerPips = [6, 10, 14, 18]
 
   for (let i = 0; i < fingerTips.length; i++) {
-    fingers.push(landmarks[fingerTips[i]].y < landmarks[fingerPips[i]].y ? 1 : 0)
+    const tipY = landmarks[fingerTips[i]].y
+    const pipY = landmarks[fingerPips[i]].y
+    
+    // Finger is up if tip is significantly above PIP
+    const isUp = tipY < pipY - 0.03
+    fingers.push(isUp ? 1 : 0)
   }
 
   return fingers
