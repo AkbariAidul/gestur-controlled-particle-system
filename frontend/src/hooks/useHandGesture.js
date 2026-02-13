@@ -58,7 +58,7 @@ export function useHandGesture(videoElement) {
     let animationFrameId = null
     let lastVideoTime = -1
     let lastDetectionTime = 0
-    const detectionInterval = 100 // Process every 100ms instead of every frame
+    const detectionInterval = 150 // Increase to 150ms (slower but smoother camera)
 
     const detectGesture = async () => {
       const now = performance.now()
@@ -82,19 +82,6 @@ export function useHandGesture(videoElement) {
               const fingers = getFingersUp(landmarks)
               const detectedGesture = classifyGesture(landmarks)
               
-              // Update debug info
-              setDebugInfo({
-                fingers: {
-                  thumb: fingers[0],
-                  index: fingers[1],
-                  middle: fingers[2],
-                  ring: fingers[3],
-                  pinky: fingers[4],
-                  count: fingers.filter(f => f).length
-                },
-                gesture: detectedGesture
-              })
-              
               // Smooth gesture detection with history
               gestureHistoryRef.current.push(detectedGesture)
               if (gestureHistoryRef.current.length > 3) {
@@ -115,10 +102,22 @@ export function useHandGesture(videoElement) {
               if (mostCommon[1] >= 2 && mostCommon[0] !== lastGestureRef.current) {
                 lastGestureRef.current = mostCommon[0]
                 setGesture(mostCommon[0])
+                
+                // Only update debug info when gesture changes (reduce re-renders)
+                setDebugInfo({
+                  fingers: {
+                    thumb: fingers[0],
+                    index: fingers[1],
+                    middle: fingers[2],
+                    ring: fingers[3],
+                    pinky: fingers[4],
+                    count: fingers.filter(f => f).length
+                  },
+                  gesture: mostCommon[0]
+                })
               }
             } else {
               // No hand detected
-              setDebugInfo(null)
               gestureHistoryRef.current.push('none')
               if (gestureHistoryRef.current.length > 3) {
                 gestureHistoryRef.current.shift()
@@ -127,6 +126,7 @@ export function useHandGesture(videoElement) {
               if (lastGestureRef.current !== 'none') {
                 lastGestureRef.current = 'none'
                 setGesture('none')
+                setDebugInfo(null)
               }
             }
           } catch (error) {

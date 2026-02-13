@@ -1,127 +1,68 @@
 # 💝 Gesture Controlled Particle System
 
-Aplikasi web interaktif romantis yang mengendalikan partikel 3D dengan gerakan tangan via webcam. Hadiah spesial untuk orang tersayang! ✨
+Aplikasi web interaktif romantis yang mengendalikan partikel 3D dengan gerakan tangan via webcam. **100% Client-Side - No Backend Required!**
 
-**🎉 100% Client-Side - No Backend Required!**
+## ✨ Gestures
 
-## ✨ Fitur Gestur
+| Gesture | Effect |
+|---------|--------|
+| ✌️ Peace Sign | "I LOVE U" text |
+| 🤟 Love Sign | Heart shape ❤️ |
+| 🤙 L Sign | "Lidiya ❤️ Aidul" |
+| ✋ Open Palm | Galaxy spiral |
+| ✊ Fist | Explosion |
 
-| Gestur | Efek Partikel |
-|--------|---------------|
-| ✌️ Peace Sign (Jari V) | Teks bercahaya "I LOVE U" |
-| 🤟 Love Sign (Jempol + Telunjuk + Kelingking) | Bentuk Hati 3D romantis |
-| 🤙 L Sign (Jempol + Telunjuk tegak lurus) | Teks "Lidiya ❤️ Aidul" |
-| ✋ Open Palm (Tangan terbuka) | Partikel menyebar seperti galaksi |
-| ✊ Fist (Kepalan tangan) | Partikel meledak spektakuler |
+## 🚀 Quick Start
 
-## 🚀 Tech Stack
-
-### Frontend (100% Client-Side)
-- **React 18** dengan Vite
-- **Three.js** + React Three Fiber untuk 3D
-- **MediaPipe Tasks Vision** untuk hand tracking (runs in browser!)
-- **Tailwind CSS** untuk styling modern
-- **WebRTC** untuk akses webcam
-
-## 📦 Instalasi & Setup
-
-### Prerequisites
-- Node.js 18+
-- Webcam
-- Modern browser (Chrome, Edge, Firefox)
-
-### Setup
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Frontend akan berjalan di `http://localhost:3000`
+Open http://localhost:3000
 
-## 🌐 Deployment
+## 📦 Deploy to Vercel (FREE!)
 
-### Deploy ke Vercel (Recommended - FREE!)
-
-1. Push code ke GitHub
-2. Import project di [Vercel](https://vercel.com)
+1. Push to GitHub
+2. Import to Vercel: https://vercel.com
 3. Set Root Directory: `frontend`
 4. Deploy!
 
-Vercel akan otomatis detect Vite dan deploy dengan benar.
+**No credit card needed!**
 
-**No backend needed!** Semua hand tracking berjalan di browser menggunakan MediaPipe WASM.
+## 📚 Documentation
 
-## 🎯 Cara Menggunakan
+- **[GUIDE.md](GUIDE.md)** - Complete usage guide with tips & troubleshooting
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Detailed deployment instructions
 
-1. Buka aplikasi di browser
-2. Izinkan akses webcam
-3. Tunggu hingga status "Ready" muncul
-4. Lakukan gesture di depan webcam:
-   - Pastikan tangan terlihat jelas
-   - Jarak ideal: 30-50cm dari kamera
-   - Pencahayaan yang cukup
-5. Lihat partikel berubah bentuk sesuai gesture!
+## 🎯 Features
 
-## 🛠️ Struktur Proyek
+- ✅ Real-time hand tracking (runs in browser!)
+- ✅ 5 gesture types with particle effects
+- ✅ Debug mode for troubleshooting
+- ✅ 100% client-side (no backend)
+- ✅ Free to deploy on Vercel
+- ✅ Mobile compatible
 
-```
-gesture-particle-system/
-├── frontend/
-│   ├── src/
-│   │   ├── hooks/
-│   │   │   └── useHandGesture.js     # MediaPipe hand tracking logic
-│   │   ├── components/
-│   │   │   ├── ParticleSystem.jsx    # 3D particle system
-│   │   │   └── WebcamCapture.jsx     # Webcam component
-│   │   ├── App.jsx                   # Main app
-│   │   ├── main.jsx
-│   │   └── index.css
-│   ├── package.json
-│   ├── vite.config.js
-│   └── vercel.json
-└── README.md
-```
+## 🛠️ Tech Stack
 
-## 🔧 Troubleshooting
-
-### Webcam tidak muncul
-- Pastikan browser memiliki permission webcam
-- Gunakan HTTPS di production (WebRTC requirement)
-- Cek webcam tidak digunakan aplikasi lain
-
-### Gesture tidak terdeteksi
-- Pastikan pencahayaan cukup
-- Tangan harus terlihat penuh di frame
-- Coba perlambat gerakan
-- Jarak ideal 30-50cm dari kamera
-
-### MediaPipe loading lambat
-- First load akan download WASM files (~2-3MB)
-- Setelah itu akan di-cache oleh browser
-- Gunakan koneksi internet yang stabil
+- React 18 + Vite
+- Three.js + React Three Fiber
+- MediaPipe Tasks Vision (WASM)
+- Tailwind CSS
 
 ## 💡 Tips
 
-- Gunakan background yang kontras dengan warna kulit
-- Pencahayaan dari depan lebih baik
-- Gesture harus jelas dan stabil selama 1-2 detik
-- Browser modern (Chrome/Edge) memberikan performa terbaik
-
-## 🎨 Customization
-
-Untuk mengubah gesture atau particle effects, edit:
-- `frontend/src/hooks/useHandGesture.js` - Gesture detection logic
-- `frontend/src/components/ParticleSystem.jsx` - Particle formations
+- Good lighting is essential
+- Distance: 30-50cm from camera
+- Hold gestures steady for 1-2 seconds
+- Use debug mode to troubleshoot
 
 ## 📝 License
 
-MIT License - Bebas digunakan untuk hadiah romantis! 💝
+MIT License - Made with 💝 for Lidiya
 
-## 🙏 Credits
+---
 
-Dibuat dengan ❤️ menggunakan:
-- [MediaPipe](https://mediapipe.dev/) - Hand tracking (client-side!)
-- [Three.js](https://threejs.org/) - 3D graphics
-- [React](https://react.dev/) - Frontend framework
-- [Vite](https://vitejs.dev/) - Build tool
+**Repository**: https://github.com/AkbariAidul/gestur-controlled-particle-system
