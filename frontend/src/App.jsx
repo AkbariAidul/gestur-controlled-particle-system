@@ -5,7 +5,8 @@ import { useHandGesture } from './hooks/useHandGesture'
 
 function App() {
   const [videoElement, setVideoElement] = useState(null)
-  const { gesture, isReady } = useHandGesture(videoElement)
+  const [showDebug, setShowDebug] = useState(false)
+  const { gesture, isReady, debugInfo } = useHandGesture(videoElement)
 
   const handleVideoReady = (video) => {
     setVideoElement(video)
@@ -29,6 +30,29 @@ function App() {
           <div className="text-sm">
             Gesture: <span className="font-bold text-pink-400">{gesture}</span>
           </div>
+          
+          {/* Debug Toggle */}
+          <button
+            onClick={() => setShowDebug(!showDebug)}
+            className="text-xs text-gray-400 hover:text-white"
+          >
+            {showDebug ? 'Hide' : 'Show'} Debug
+          </button>
+          
+          {/* Debug Info */}
+          {showDebug && debugInfo && (
+            <div className="text-xs space-y-1 mt-2 border-t border-gray-700 pt-2">
+              <div>Fingers:</div>
+              <div className="pl-2">
+                <div>👍 Thumb: {debugInfo.fingers.thumb ? '✓' : '✗'}</div>
+                <div>☝️ Index: {debugInfo.fingers.index ? '✓' : '✗'}</div>
+                <div>🖕 Middle: {debugInfo.fingers.middle ? '✓' : '✗'}</div>
+                <div>💍 Ring: {debugInfo.fingers.ring ? '✓' : '✗'}</div>
+                <div>🤙 Pinky: {debugInfo.fingers.pinky ? '✓' : '✗'}</div>
+                <div className="mt-1">Count: {debugInfo.fingers.count}</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -110,15 +110,28 @@ function Particles({ gesture }) {
 // Helper functions to create shapes
 function createTextShape(text, count) {
   const positions = new Float32Array(count * 3)
-  const scale = 2
+  
+  // Create text-like pattern using letter positions
+  const letters = text.split('')
+  const letterWidth = 1.5
+  const totalWidth = letters.length * letterWidth
+  const startX = -totalWidth / 2
   
   for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2 * 3
-    const radius = 3 + Math.random() * 0.5
+    const letterIndex = Math.floor((i / count) * letters.length)
+    const localProgress = ((i / count) * letters.length) % 1
     
-    positions[i * 3] = Math.cos(angle) * radius * scale
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 2 * scale
-    positions[i * 3 + 2] = Math.sin(angle) * radius * scale
+    // Position for this letter
+    const letterX = startX + letterIndex * letterWidth
+    
+    // Create letter shape (simplified block letters)
+    const x = letterX + (Math.random() - 0.5) * letterWidth * 0.8
+    const y = (Math.random() - 0.5) * 2
+    const z = (Math.random() - 0.5) * 0.5
+    
+    positions[i * 3] = x
+    positions[i * 3 + 1] = y
+    positions[i * 3 + 2] = z
   }
   
   return positions

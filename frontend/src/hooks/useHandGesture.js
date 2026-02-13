@@ -4,6 +4,7 @@ import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision'
 export function useHandGesture(videoElement) {
   const [gesture, setGesture] = useState('none')
   const [isReady, setIsReady] = useState(false)
+  const [debugInfo, setDebugInfo] = useState(null)
   const handLandmarkerRef = useRef(null)
   const lastGestureRef = useRef('none')
   const gestureHistoryRef = useRef([])
@@ -78,7 +79,21 @@ export function useHandGesture(videoElement) {
 
             if (results.landmarks && results.landmarks.length > 0) {
               const landmarks = results.landmarks[0]
+              const fingers = getFingersUp(landmarks)
               const detectedGesture = classifyGesture(landmarks)
+              
+              // Update debug info
+              setDebugInfo({
+                fingers: {
+                  thumb: fingers[0],
+                  index: fingers[1],
+                  middle: fingers[2],
+                  ring: fingers[3],
+                  pinky: fingers[4],
+                  count: fingers.filter(f => f).length
+                },
+                gesture: detectedGesture
+              })
               
               // Smooth gesture detection with history
               gestureHistoryRef.current.push(detectedGesture)
@@ -103,6 +118,7 @@ export function useHandGesture(videoElement) {
               }
             } else {
               // No hand detected
+              setDebugInfo(null)
               gestureHistoryRef.current.push('none')
               if (gestureHistoryRef.current.length > 3) {
                 gestureHistoryRef.current.shift()
@@ -131,7 +147,7 @@ export function useHandGesture(videoElement) {
     }
   }, [isReady, videoElement])
 
-  return { gesture, isReady }
+  return { gesture, isReady, debugInfo }
 }
 
 // Classify gesture based on hand landmarks
@@ -153,8 +169,20 @@ function classifyGesture(landmarks) {
   }
 
   // Peace Sign: ONLY Index and Middle up (2 fingers)
-  if (fingerCount === 2 && !thumb && index && middle && !ring && !pinky) {
-    return 'peace'
+  // Check more strictly - thumb must be clearly down
+  if (fingerCount === 2 && index && middle && !ring && !pinky) {
+    // Additional check: index and middle should be close together
+    const indexTip = landmarks[8]
+    const middleTip = landmarks[12]
+    const distance = Math.sqrt(
+      Math.pow(indexTip.x - middleTip.x, 2) + 
+      Math.pow(indexTip.y - middleTip.y, 2)
+    )
+    
+    // If fingers are reasonably close (V shape), it's peace sign
+    if (distance < 0.15) {
+      return 'peace'
+    }
   }
 
   // Love Sign: Thumb, Index, and Pinky up (3 fingers)
@@ -162,10 +190,24 @@ function classifyGesture(landmarks) {
     return 'love'
   }
 
-  // L Sign: Thumb and Index up, check angle (2 fingers)
+  // L Sign: Thumb and Index up, forming L shape (2 fingers)
   if (fingerCount === 2 && thumb && index && !middle && !ring && !pinky) {
+    // Check angle between thumb and index
     const angle = calculateAngle(landmarks[4], landmarks[0], landmarks[8])
-    if (angle > 60 && angle < 120) {
+    
+    // Also check if thumb is horizontal and index is vertical
+    const thumbTip = landmarks[4]
+    const thumbBase = landmarks[2]
+    const indexTip = landmarks[8]
+    const indexBase = landmarks[5]
+    
+    // Thumb should be more horizontal (x difference > y difference)
+    const thumbHorizontal = Math.abs(thumbTip.x - thumbBase.x) > Math.abs(thumbTip.y - thumbBase.y)
+    
+    // Index should be more vertical (y difference > x difference)
+    const indexVertical = Math.abs(indexTip.y - indexBase.y) > Math.abs(indexTip.x - indexBase.x)
+    
+    if (angle > 60 && angle < 120 && thumbHorizontal && indexVertical) {
       return 'l_sign'
     }
   }
@@ -178,11 +220,11 @@ function getFingersUp(landmarks) {
   const fingers = []
 
   // Thumb: Check if tip is to the right of MCP joint (for right hand)
-  // More reliable: compare thumb tip with thumb IP joint
-  const thumbIsUp = landmarks[4].x < landmarks[3].x - 0.05
+  // Use a more lenient threshold
+  const thumbIsUp = landmarks[4].x < landmarks[3].x - 0.04
   fingers.push(thumbIsUp ? 1 : 0)
 
-  // Other fingers: Compare tip with PIP joint (more reliable than MCP)
+  // Other fingers: Compare tip with PIP joint
   const fingerTips = [8, 12, 16, 20]
   const fingerPips = [6, 10, 14, 18]
 
@@ -191,7 +233,8 @@ function getFingersUp(landmarks) {
     const pipY = landmarks[fingerPips[i]].y
     
     // Finger is up if tip is significantly above PIP
-    const isUp = tipY < pipY - 0.03
+    // Use more lenient threshold for better detection
+    const isUp = tipY < pipY - 0.02
     fingers.push(isUp ? 1 : 0)
   }
 
