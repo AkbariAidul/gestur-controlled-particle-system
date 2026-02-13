@@ -2,6 +2,8 @@
 
 Aplikasi web interaktif romantis yang mengendalikan partikel 3D dengan gerakan tangan via webcam. Hadiah spesial untuk orang tersayang! ✨
 
+**🎉 100% Client-Side - No Backend Required!**
+
 ## ✨ Fitur Gestur
 
 | Gestur | Efek Partikel |
@@ -14,39 +16,24 @@ Aplikasi web interaktif romantis yang mengendalikan partikel 3D dengan gerakan t
 
 ## 🚀 Tech Stack
 
-### Backend
-- **Python 3.11** dengan FastAPI
-- **MediaPipe** untuk deteksi gesture tangan
-- **WebSocket** untuk komunikasi real-time
-- **OpenCV** untuk pemrosesan gambar
-
-### Frontend
+### Frontend (100% Client-Side)
 - **React 18** dengan Vite
 - **Three.js** + React Three Fiber untuk 3D
+- **MediaPipe Tasks Vision** untuk hand tracking (runs in browser!)
 - **Tailwind CSS** untuk styling modern
 - **WebRTC** untuk akses webcam
 
 ## 📦 Instalasi & Setup
 
 ### Prerequisites
-- Python 3.11+
 - Node.js 18+
 - Webcam
+- Modern browser (Chrome, Edge, Firefox)
 
-### Backend Setup
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Backend akan berjalan di `http://localhost:8000`
-
-### Frontend Setup
+### Setup
 ```bash
 cd frontend
 npm install
-cp env.example .env
 npm run dev
 ```
 
@@ -54,15 +41,22 @@ Frontend akan berjalan di `http://localhost:3000`
 
 ## 🌐 Deployment
 
-Lihat [DEPLOYMENT.md](DEPLOYMENT.md) untuk panduan lengkap deployment ke:
-- **Backend**: Render.com
-- **Frontend**: Vercel.com
+### Deploy ke Vercel (Recommended - FREE!)
+
+1. Push code ke GitHub
+2. Import project di [Vercel](https://vercel.com)
+3. Set Root Directory: `frontend`
+4. Deploy!
+
+Vercel akan otomatis detect Vite dan deploy dengan benar.
+
+**No backend needed!** Semua hand tracking berjalan di browser menggunakan MediaPipe WASM.
 
 ## 🎯 Cara Menggunakan
 
 1. Buka aplikasi di browser
 2. Izinkan akses webcam
-3. Tunggu hingga status "Connected" muncul
+3. Tunggu hingga status "Ready" muncul
 4. Lakukan gesture di depan webcam:
    - Pastikan tangan terlihat jelas
    - Jarak ideal: 30-50cm dari kamera
@@ -73,31 +67,23 @@ Lihat [DEPLOYMENT.md](DEPLOYMENT.md) untuk panduan lengkap deployment ke:
 
 ```
 gesture-particle-system/
-├── backend/
-│   ├── main.py                 # FastAPI server & WebSocket
-│   ├── gesture_detector.py     # Logika deteksi gesture
-│   ├── requirements.txt        # Dependencies Python
-│   └── render.yaml            # Config deployment Render
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx            # Komponen utama
+│   │   ├── hooks/
+│   │   │   └── useHandGesture.js     # MediaPipe hand tracking logic
 │   │   ├── components/
-│   │   │   ├── ParticleSystem.jsx  # Sistem partikel 3D
-│   │   │   └── WebcamCapture.jsx   # Capture webcam
+│   │   │   ├── ParticleSystem.jsx    # 3D particle system
+│   │   │   └── WebcamCapture.jsx     # Webcam component
+│   │   ├── App.jsx                   # Main app
 │   │   ├── main.jsx
 │   │   └── index.css
 │   ├── package.json
 │   ├── vite.config.js
-│   └── vercel.json            # Config deployment Vercel
+│   └── vercel.json
 └── README.md
 ```
 
 ## 🔧 Troubleshooting
-
-### Backend tidak connect
-- Pastikan backend sudah running di port 8000
-- Cek firewall tidak memblokir port
-- Lihat console untuk error messages
 
 ### Webcam tidak muncul
 - Pastikan browser memiliki permission webcam
@@ -110,12 +96,23 @@ gesture-particle-system/
 - Coba perlambat gerakan
 - Jarak ideal 30-50cm dari kamera
 
+### MediaPipe loading lambat
+- First load akan download WASM files (~2-3MB)
+- Setelah itu akan di-cache oleh browser
+- Gunakan koneksi internet yang stabil
+
 ## 💡 Tips
 
 - Gunakan background yang kontras dengan warna kulit
 - Pencahayaan dari depan lebih baik
 - Gesture harus jelas dan stabil selama 1-2 detik
-- Jika lag, kurangi resolusi webcam di `WebcamCapture.jsx`
+- Browser modern (Chrome/Edge) memberikan performa terbaik
+
+## 🎨 Customization
+
+Untuk mengubah gesture atau particle effects, edit:
+- `frontend/src/hooks/useHandGesture.js` - Gesture detection logic
+- `frontend/src/components/ParticleSystem.jsx` - Particle formations
 
 ## 📝 License
 
@@ -124,7 +121,7 @@ MIT License - Bebas digunakan untuk hadiah romantis! 💝
 ## 🙏 Credits
 
 Dibuat dengan ❤️ menggunakan:
-- [MediaPipe](https://mediapipe.dev/) - Hand tracking
+- [MediaPipe](https://mediapipe.dev/) - Hand tracking (client-side!)
 - [Three.js](https://threejs.org/) - 3D graphics
-- [FastAPI](https://fastapi.tiangolo.com/) - Backend framework
 - [React](https://react.dev/) - Frontend framework
+- [Vite](https://vitejs.dev/) - Build tool

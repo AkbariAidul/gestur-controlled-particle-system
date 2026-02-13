@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 
-function WebcamCapture({ onFrame }) {
+function WebcamCapture({ onVideoReady }) {
   const videoRef = useRef(null)
-  const canvasRef = useRef(null)
   const [isReady, setIsReady] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     let stream = null
-    let intervalId = null
 
     const startWebcam = async () => {
       try {
@@ -22,52 +21,34 @@ function WebcamCapture({ onFrame }) {
         if (videoRef.current) {
           videoRef.current.srcObject = stream
           
-          // Wait for video to be ready
           videoRef.current.onloadedmetadata = () => {
             videoRef.current.play()
             setIsReady(true)
             
-            // Send frames every 300ms (slower to reduce flicker)
-            intervalId = setInterval(() => {
-              captureFrame()
-            }, 300)
+            // Pass video element to parent
+            if (onVideoReady) {
+              onVideoReady(videoRef.current)
+            }
           }
         }
-      } catch (error) {
-        console.error('Error accessing webcam:', error)
-      }
-    }
-
-    const captureFrame = () => {
-      if (videoRef.current && canvasRef.current && isReady) {
-        const video = videoRef.current
-        const canvas = canvasRef.current
-        const ctx = canvas.getContext('2d')
-
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-          canvas.width = video.videoWidth
-          canvas.height = video.videoHeight
-          ctx.drawImage(video, 0, 0)
-
-          const base64Image = canvas.toDataURL('image/jpeg', 0.7)
-          onFrame(base64Image)
-        }
+      } catch (err) {
+        console.error('Error accessing webcam:', err)
+        setError('Cannot access webcam. Please allow camera permission.')
       }
     }
 
     startWebcam()
 
     return () => {
-      if (intervalId) clearInterval(intervalId)
       if (stream) {
         stream.getTracks().forEach(track => track.stop())
       }
     }
-  }, [onFrame, isReady])
+  }, [onVideoReady])
 
   return (
     <div className="absolute top-4 right-4 z-10">
-      <div className="relative w-48 h-36 rounded-lg overflow-hidden border-2 border-pink-500/50 shadow-lg">
+      <div className="relative w-48 h-36 rounded-lg overflow-hidden border-2 border-pink-500/50 shadow-lg bg-black">
         <video
           ref={videoRef}
           autoPlay
@@ -75,10 +56,14 @@ function WebcamCapture({ onFrame }) {
           muted
           className="w-full h-full object-cover transform -scale-x-100"
         />
-        <canvas ref={canvasRef} className="hidden" />
-        {!isReady && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <span className="text-white text-xs">Loading...</span>
+        {!isReady && !error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+            <span className="text-white text-xs">Loading camera...</span>
+          </div>
+        )}
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-red-900/70 p-2">
+            <span className="text-white text-xs text-center">{error}</span>
           </div>
         )}
       </div>

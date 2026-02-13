@@ -5,5 +5,17 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000
+  },
+  optimizeDeps: {
+    exclude: ['@mediapipe/tasks-vision']
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'mediapipe': ['@mediapipe/tasks-vision']
+        }
+      }
+    }
   }
 })
