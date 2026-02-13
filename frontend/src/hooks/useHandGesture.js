@@ -84,11 +84,11 @@ export function useHandGesture(videoElement) {
               
               // Smooth gesture detection with history
               gestureHistoryRef.current.push(detectedGesture)
-              if (gestureHistoryRef.current.length > 3) {
+              if (gestureHistoryRef.current.length > 2) {
                 gestureHistoryRef.current.shift()
               }
 
-              // Get most common gesture (require 2 out of 3)
+              // Get most common gesture (require 2 out of 2 for faster response)
               const gestureCounts = {}
               gestureHistoryRef.current.forEach(g => {
                 gestureCounts[g] = (gestureCounts[g] || 0) + 1
@@ -98,8 +98,8 @@ export function useHandGesture(videoElement) {
                 b[1] > a[1] ? b : a
               )
 
-              // Update if we have at least 2 consistent readings
-              if (mostCommon[1] >= 2 && mostCommon[0] !== lastGestureRef.current) {
+              // Update if we have at least 2 consistent readings OR if it's a clear gesture
+              if ((mostCommon[1] >= 2 || mostCommon[0] !== 'none') && mostCommon[0] !== lastGestureRef.current) {
                 lastGestureRef.current = mostCommon[0]
                 setGesture(mostCommon[0])
                 
@@ -119,7 +119,7 @@ export function useHandGesture(videoElement) {
             } else {
               // No hand detected
               gestureHistoryRef.current.push('none')
-              if (gestureHistoryRef.current.length > 3) {
+              if (gestureHistoryRef.current.length > 2) {
                 gestureHistoryRef.current.shift()
               }
               
@@ -158,6 +158,11 @@ function classifyGesture(landmarks) {
   // Count extended fingers
   const fingerCount = fingers.filter(f => f).length
 
+  // Log for debugging
+  if (fingerCount > 0 && fingerCount < 5) {
+    console.log('Fingers:', { thumb, index, middle, ring, pinky, count: fingerCount })
+  }
+
   // Fist: All fingers down (check first for priority)
   if (fingerCount === 0) {
     return 'fist'
@@ -169,9 +174,9 @@ function classifyGesture(landmarks) {
   }
 
   // Peace Sign: ONLY Index and Middle up (2 fingers)
-  // Check more strictly - thumb must be clearly down
-  if (fingerCount === 2 && index && middle && !ring && !pinky) {
-    // Additional check: index and middle should be close together
+  // More lenient - just check if index and middle are up
+  if (index && middle && !ring && !pinky) {
+    // Check finger distance for V shape
     const indexTip = landmarks[8]
     const middleTip = landmarks[12]
     const distance = Math.sqrt(
@@ -179,35 +184,48 @@ function classifyGesture(landmarks) {
       Math.pow(indexTip.y - middleTip.y, 2)
     )
     
-    // If fingers are reasonably close (V shape), it's peace sign
-    if (distance < 0.15) {
+    console.log('Peace check - distance:', distance, 'thumb:', thumb)
+    
+    // More lenient distance check
+    if (distance < 0.2) {
       return 'peace'
     }
   }
 
   // Love Sign: Thumb, Index, and Pinky up (3 fingers)
-  if (fingerCount === 3 && thumb && index && !middle && !ring && pinky) {
+  // More lenient - allow if these 3 are clearly up
+  if (thumb && index && pinky && !middle && !ring) {
+    console.log('Love sign detected!')
+    return 'love'
+  }
+
+  // Alternative love sign check - sometimes middle might be slightly detected
+  if (fingerCount === 3 && thumb && index && pinky) {
+    console.log('Love sign detected (alternative)!')
     return 'love'
   }
 
   // L Sign: Thumb and Index up, forming L shape (2 fingers)
-  if (fingerCount === 2 && thumb && index && !middle && !ring && !pinky) {
+  if (thumb && index && !middle && !ring && !pinky) {
     // Check angle between thumb and index
     const angle = calculateAngle(landmarks[4], landmarks[0], landmarks[8])
     
-    // Also check if thumb is horizontal and index is vertical
+    // Check orientation
     const thumbTip = landmarks[4]
     const thumbBase = landmarks[2]
     const indexTip = landmarks[8]
     const indexBase = landmarks[5]
     
-    // Thumb should be more horizontal (x difference > y difference)
-    const thumbHorizontal = Math.abs(thumbTip.x - thumbBase.x) > Math.abs(thumbTip.y - thumbBase.y)
+    // Thumb should be more horizontal
+    const thumbHorizontal = Math.abs(thumbTip.x - thumbBase.x) > Math.abs(thumbTip.y - thumbBase.y) * 0.7
     
-    // Index should be more vertical (y difference > x difference)
-    const indexVertical = Math.abs(indexTip.y - indexBase.y) > Math.abs(indexTip.x - indexBase.x)
+    // Index should be more vertical
+    const indexVertical = Math.abs(indexTip.y - indexBase.y) > Math.abs(indexTip.x - indexBase.x) * 0.7
     
-    if (angle > 60 && angle < 120 && thumbHorizontal && indexVertical) {
+    console.log('L Sign check - angle:', angle, 'thumbH:', thumbHorizontal, 'indexV:', indexVertical)
+    
+    // More lenient angle and orientation check
+    if (angle > 50 && angle < 130) {
       return 'l_sign'
     }
   }
@@ -215,16 +233,15 @@ function classifyGesture(landmarks) {
   return 'none'
 }
 
-// Determine which fingers are extended
+// Determine which fingers are extended - MORE LENIENT
 function getFingersUp(landmarks) {
   const fingers = []
 
-  // Thumb: Check if tip is to the right of MCP joint (for right hand)
-  // Use a more lenient threshold
-  const thumbIsUp = landmarks[4].x < landmarks[3].x - 0.04
+  // Thumb: More lenient threshold
+  const thumbIsUp = landmarks[4].x < landmarks[3].x - 0.03
   fingers.push(thumbIsUp ? 1 : 0)
 
-  // Other fingers: Compare tip with PIP joint
+  // Other fingers: More lenient threshold
   const fingerTips = [8, 12, 16, 20]
   const fingerPips = [6, 10, 14, 18]
 
@@ -232,9 +249,8 @@ function getFingersUp(landmarks) {
     const tipY = landmarks[fingerTips[i]].y
     const pipY = landmarks[fingerPips[i]].y
     
-    // Finger is up if tip is significantly above PIP
-    // Use more lenient threshold for better detection
-    const isUp = tipY < pipY - 0.02
+    // More lenient - finger is up if tip is above PIP
+    const isUp = tipY < pipY - 0.015
     fingers.push(isUp ? 1 : 0)
   }
 
