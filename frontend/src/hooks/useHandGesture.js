@@ -56,18 +56,24 @@ export function useHandGesture(videoElement) {
 
     let animationFrameId = null
     let lastVideoTime = -1
+    let lastDetectionTime = 0
+    const detectionInterval = 100 // Process every 100ms instead of every frame
 
     const detectGesture = async () => {
+      const now = performance.now()
+      
       if (videoElement.readyState >= 2) {
         const currentTime = videoElement.currentTime
 
-        if (currentTime !== lastVideoTime) {
+        // Only process if enough time has passed AND video time changed
+        if (currentTime !== lastVideoTime && now - lastDetectionTime >= detectionInterval) {
           lastVideoTime = currentTime
+          lastDetectionTime = now
 
           try {
             const results = handLandmarkerRef.current.detectForVideo(
               videoElement,
-              performance.now()
+              now
             )
 
             if (results.landmarks && results.landmarks.length > 0) {
@@ -94,7 +100,6 @@ export function useHandGesture(videoElement) {
               if (mostCommon[1] >= 2 && mostCommon[0] !== lastGestureRef.current) {
                 lastGestureRef.current = mostCommon[0]
                 setGesture(mostCommon[0])
-                console.log('Gesture detected:', mostCommon[0])
               }
             } else {
               // No hand detected
@@ -137,9 +142,6 @@ function classifyGesture(landmarks) {
   // Count extended fingers
   const fingerCount = fingers.filter(f => f).length
 
-  // Debug log (remove in production)
-  console.log('Fingers:', { thumb, index, middle, ring, pinky, count: fingerCount })
-
   // Fist: All fingers down (check first for priority)
   if (fingerCount === 0) {
     return 'fist'
@@ -163,7 +165,6 @@ function classifyGesture(landmarks) {
   // L Sign: Thumb and Index up, check angle (2 fingers)
   if (fingerCount === 2 && thumb && index && !middle && !ring && !pinky) {
     const angle = calculateAngle(landmarks[4], landmarks[0], landmarks[8])
-    console.log('L Sign angle:', angle)
     if (angle > 60 && angle < 120) {
       return 'l_sign'
     }
